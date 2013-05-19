@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D11B7F231747EF8C000FA4C3 /* HOURecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = D11B7F211747EEC7000FA4C3 /* HOURecursiveDescription.m */; };
+		D11B7F261748509A000FA4C3 /* HOURecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = D11B7F251748509A000FA4C3 /* HOURecursiveDescription.m */; };
 		D1BE84351735331D00C627F6 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1BE84341735331D00C627F6 /* UIKit.framework */; };
 		D1BE84371735331D00C627F6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1BE84361735331D00C627F6 /* Foundation.framework */; };
 		D1BE84391735331D00C627F6 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1BE84381735331D00C627F6 /* CoreGraphics.framework */; };
@@ -24,7 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		D11B7F211747EEC7000FA4C3 /* HOURecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HOURecursiveDescription.m; sourceTree = "<group>"; };
+		D11B7F251748509A000FA4C3 /* HOURecursiveDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HOURecursiveDescription.m; sourceTree = "<group>"; };
 		D1BE84311735331D00C627F6 /* RecursiveDescriptionExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RecursiveDescriptionExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1BE84341735331D00C627F6 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		D1BE84361735331D00C627F6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -61,18 +61,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D11B7F201747EEC7000FA4C3 /* HOURecursiveDescription */ = {
+		D11B7F241748509A000FA4C3 /* HOURecursiveDescription */ = {
 			isa = PBXGroup;
 			children = (
-				D11B7F211747EEC7000FA4C3 /* HOURecursiveDescription.m */,
+				D11B7F251748509A000FA4C3 /* HOURecursiveDescription.m */,
 			);
-			path = HOURecursiveDescription;
+			name = HOURecursiveDescription;
+			path = ../HOURecursiveDescription;
 			sourceTree = "<group>";
 		};
 		D1BE84281735331D00C627F6 = {
 			isa = PBXGroup;
 			children = (
-				D11B7F201747EEC7000FA4C3 /* HOURecursiveDescription */,
+				D11B7F241748509A000FA4C3 /* HOURecursiveDescription */,
 				D1BE843A1735331D00C627F6 /* RecursiveDescriptionExample */,
 				D1BE84331735331D00C627F6 /* Frameworks */,
 				D1BE84321735331D00C627F6 /* Products */,
@@ -197,7 +198,7 @@
 				D1BE84411735331D00C627F6 /* main.m in Sources */,
 				D1BE84451735331D00C627F6 /* AppDelegate.m in Sources */,
 				D1BE84551735334B00C627F6 /* RootViewController.m in Sources */,
-				D11B7F231747EF8C000FA4C3 /* HOURecursiveDescription.m in Sources */,
+				D11B7F261748509A000FA4C3 /* HOURecursiveDescription.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

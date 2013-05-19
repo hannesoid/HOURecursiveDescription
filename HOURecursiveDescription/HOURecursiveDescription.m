@@ -1,6 +1,6 @@
 //
-//  HOUTools.m
-//  RecursiveDescription
+//  HOURecursiveDescription.m
+//  HOURecursiveDescription
 //
 //  Created by Hannes Oud on 04.05.13.
 //  Copyright (c) 2013 Hannes Oud. All rights reserved.
@@ -11,17 +11,20 @@
 
 #if DEBUG
 
+#pragma mark - Adding [UIView recursiveDescription2]
+
 static BOOL isUIViewOrUIViewControllerClass(const char *classname) {
     return (strcmp(classname, "UIView") == 0 || strcmp(classname, "UIViewController") == 0);
 }
 
 /**
- * Produces sth. like @{ @"0x7572b10": @[@"_subview1"], @"0x756e460" : @[@"_myButtonInView1", @"_myButtonAlsoInView2"]} :
- * Fills the provieded mutable dictionary with entries of the form ivar_value_adress_string1 -> ivarname1[, ivarname2,..],
+ * Fills the provided mutable dictionary with entries of the form ivar_value_adress_string1 -> ivarname1[, ivarname2,..],
  * where the ivar_value_adress_strings are the formatted pointer-adress-string's of each ivar of obj, defined in obj.class,
  * and its superclasses up to those defined in UIView.class or UIViewController.class.
  *
  * ivars are only collected if they are UIView or subclass.
+ *
+ * Produces sth. like @{ @"0x7572b10": @[@"_subview1"], @"0x756e460" : @[@"_myButtonInView1", @"_myButtonAlsoInView2"]}.. 
  */
 static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionary *dict) {
 
@@ -30,9 +33,8 @@ static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionar
     unsigned int ivarCount = 0;
     
     Class class = obj.class;
-
     
-    while (!isUIViewOrUIViewControllerClass(class_getName(class))) { // traverse class and superclasses
+    while (!isUIViewOrUIViewControllerClass(class_getName(class))) { // traverse class and superclasses up to UIView[Controller]
         
         Ivar *ivars = class_copyIvarList(class, &ivarCount);
         
@@ -47,13 +49,12 @@ static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionar
             
             id varValue = object_getIvar(obj, var);
             
-            if ([varValue isKindOfClass:UIView.class]) {    // only consider UIView and subclasses
-                                                
-                NSNumber *key = [NSString stringWithFormat:@"%p", varValue];  // sth like "0x756e460"
-                if (!dict[key]) dict[key] = [[NSMutableArray alloc] init];
-                [((NSMutableArray *) dict[key]) addObject: [NSString stringWithCString:name encoding:NSASCIIStringEncoding]];
-                
-            }
+            if (![varValue isKindOfClass:UIView.class]) continue;    // if it's not UIView or subclasses, ignore it
+
+            NSNumber *key = [NSString stringWithFormat:@"%p", varValue];  // sth like "0x756e460"
+            
+            if (!dict[key]) dict[key] = [[NSMutableArray alloc] init];
+            [((NSMutableArray *) dict[key]) addObject: [NSString stringWithCString:name encoding:NSASCIIStringEncoding]];
             
         }
         
@@ -63,7 +64,7 @@ static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionar
     
 }
 
-static void recursivelyCollectPointerToNamesDict(UIView *view, NSMutableDictionary *dict) {
+static void recursivelyCollectIvarPointerToNamesDict(UIView *view, NSMutableDictionary *dict) {
 
     // collect ivars from associated viewcontroller, if applicable
     id nextResponder = [view nextResponder];
@@ -77,23 +78,8 @@ static void recursivelyCollectPointerToNamesDict(UIView *view, NSMutableDictiona
     // collect ivars from the view's subviews
     for (UIView *subview in view.subviews) {
         
-        recursivelyCollectPointerToNamesDict(subview, dict);
+        recursivelyCollectIvarPointerToNamesDict(subview, dict);
     }
-    
-}
-
-static NSMutableString *recursiveDescr(UIView *view) {
-    
-    // recursiveDescription is private
-    // here's a stupid workaround to prevent unrecognized selector warning:
-    
-    SEL recDescSEL = NSSelectorFromString([NSString stringWithFormat:@"%@Description",@"recursive"]);
-    NSMutableString *description;
-    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:([view methodSignatureForSelector:recDescSEL])];
-    [invocation invoke];
-    [invocation getReturnValue:&description];
-    
-    return description;
     
 }
 
@@ -115,6 +101,7 @@ __attribute__((constructor)) static void HOUDAddRecursiveDescription2(void) {
 #pragma clang diagnostic pop
             
             NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+            recursivelyCollectIvarPointerToNamesDict(view, dict);
             
             // regex matches UIView-like description formats e.g. "<UIView: 0x756e460;" in two groups
             // index 1 (<UIView: ), index 2 (0x756e460), index 0 is the entire match
@@ -147,7 +134,9 @@ __attribute__((constructor)) static void HOUDAddRecursiveDescription2(void) {
     }
 }
 
-void HOUswizzle(Class c, SEL orig, SEL new) { //same as pspdf_swizzle
+#pragma mark - Pimping [UIView description]
+
+static void HOUswizzle(Class c, SEL orig, SEL new) { // same as pspdf_swizzle
     Method origMethod = class_getInstanceMethod(c, orig);
     Method newMethod = class_getInstanceMethod(c, new);
     if(class_addMethod(c, orig, method_getImplementation(newMethod), method_getTypeEncoding(newMethod))) {
@@ -157,6 +146,7 @@ void HOUswizzle(Class c, SEL orig, SEL new) { //same as pspdf_swizzle
     }
 }
 
+
 static BOOL HOUIsVisibleView(UIView *view) { // same as PSPDFKitIsVisibleView
     BOOL isViewHidden = view.isHidden || view.alpha == 0 || CGRectIsEmpty(view.frame);
     return !view || (HOUIsVisibleView(view.superview) && !isViewHidden);
@@ -164,12 +154,17 @@ static BOOL HOUIsVisibleView(UIView *view) { // same as PSPDFKitIsVisibleView
 
 
 
-// Following code patches UIView's description to show the classname of an an view controller, if one is attached.
-// Will only get compiled for debugging. Use 'po [[UIWindow keyWindow] recursiveDescription]' to invoke.
+// Following code patches UIView's description to show the classname of an an view controller, if one is attached,
+// and adds XX for hidden views and warnings for wierd view frames.
 __attribute__((constructor)) static void HOUImproveUIViewDescription(void) { // almost same as PSPDFKitImproveRecursiveDescription
     @autoreleasepool {
         
-        SEL customViewDescriptionSEL = NSSelectorFromString(@"pspdf_customViewDescription");
+        // prevent pspdf conflict
+        SEL pspdf_customViewDescriptionSEL = @selector(pspdf_customViewDescription);
+        Method method = class_getInstanceMethod(UIView.class, pspdf_customViewDescriptionSEL);
+        if (method) return; // pspdf.. probably already swizzled it by a similar method, stop here.
+        
+        SEL customViewDescriptionSEL = @selector(hou_customViewDescription);
         IMP customViewDescriptionIMP = imp_implementationWithBlock(^(id _self) {
             
 #pragma clang diagnostic push
