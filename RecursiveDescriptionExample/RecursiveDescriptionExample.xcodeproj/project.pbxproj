@@ -19,6 +19,7 @@
 		D1BE844B1735331D00C627F6 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1BE844A1735331D00C627F6 /* Default-568h@2x.png */; };
 		D1BE84521735332E00C627F6 /* Storyboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D1BE84511735332E00C627F6 /* Storyboard.storyboard */; };
 		D1BE84551735334B00C627F6 /* RootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D1BE84541735334B00C627F6 /* RootViewController.m */; };
+		D1EB85A717AA6D08007660FF /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = D1EB85A617AA6D08007660FF /* image.png */; };
 		KIYDQKWBMRKIEYEVRWSLKUDQ /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = HYXIFWTDXJPPRRMDCEPMDTJH /* QuartzCore.framework */; };
 		KNPONLATPTEBRUFEBXNXFHCQ /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = THBDITSPYVFDWQYYBDCIDIXG /* libz.dylib */; };
 /* End PBXBuildFile section */
@@ -41,6 +42,7 @@
 		D1BE84511735332E00C627F6 /* Storyboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Storyboard.storyboard; sourceTree = "<group>"; };
 		D1BE84531735334B00C627F6 /* RootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RootViewController.h; sourceTree = "<group>"; };
 		D1BE84541735334B00C627F6 /* RootViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RootViewController.m; sourceTree = "<group>"; };
+		D1EB85A617AA6D08007660FF /* image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = image.png; sourceTree = "<group>"; };
 		HYXIFWTDXJPPRRMDCEPMDTJH /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		THBDITSPYVFDWQYYBDCIDIXG /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -104,6 +106,7 @@
 			isa = PBXGroup;
 			children = (
 				D1BE84511735332E00C627F6 /* Storyboard.storyboard */,
+				D1EB85A617AA6D08007660FF /* image.png */,
 				D1BE84431735331D00C627F6 /* AppDelegate.h */,
 				D1BE84441735331D00C627F6 /* AppDelegate.m */,
 				D1BE84531735334B00C627F6 /* RootViewController.h */,
@@ -185,6 +188,7 @@
 				D1BE84491735331D00C627F6 /* Default@2x.png in Resources */,
 				D1BE844B1735331D00C627F6 /* Default-568h@2x.png in Resources */,
 				D1BE84521735332E00C627F6 /* Storyboard.storyboard in Resources */,
+				D1EB85A717AA6D08007660FF /* image.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

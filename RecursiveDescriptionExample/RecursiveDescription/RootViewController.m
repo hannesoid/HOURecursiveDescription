@@ -14,6 +14,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *myButton;
 @property (weak, nonatomic) IBOutlet UIButton *myButton2;
 @property (weak, nonatomic) IBOutlet UIView *greyBlob;
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
 
 @end
 

@@ -5,11 +5,44 @@
 //  Created by Hannes Oud on 04.05.13.
 //  Copyright (c) 2013 Hannes Oud. All rights reserved.
 //
+//  HOURollOutDescriptionPimping is the entry point
 
 #import <objc/runtime.h>
 #import <UIKit/UIKit.h>
 
 #if DEBUG
+
+#pragma mark - Helpers for Swizzling
+
+/**
+ * A copy of pspdf_replaceMethodWithBlock
+ * Swizzles the new method, using the block as implementation. 
+ * Old implementation will be available under the newSEL selector.
+ */
+BOOL HOUReplaceMethodWithBlock(Class c, SEL origSEL, SEL newSEL, id block) {
+//    NSAssert(c && origSEL && newSEL && block, @"invalid parameters in block swizzle"); // todo replace NSAssert, as it requires self & _cmd
+    Method origMethod = class_getInstanceMethod(c, origSEL);
+    const char *encoding = method_getTypeEncoding(origMethod);
+    
+    // Add the new method.
+    IMP impl = imp_implementationWithBlock(block);
+    if (!class_addMethod(c, newSEL, impl, encoding)) {
+        NSLog(@"Failed to add method: %@ on %@", NSStringFromSelector(newSEL), c);
+        return NO;
+    }else {
+        // Ensure the new selector has the same parameters as the existing selector.
+        Method newMethod = class_getInstanceMethod(c, newSEL);
+        // NSAssert(strcmp(method_getTypeEncoding(origMethod), method_getTypeEncoding(newMethod)) == 0, @"Encoding must be the same."); // todo replace NSAssert, as it requires self & _cmd
+        
+        // If original doesn't implement the method we want to swizzle, create it.
+        if (class_addMethod(c, origSEL, method_getImplementation(newMethod), encoding)) {
+            class_replaceMethod(c, newSEL, method_getImplementation(origMethod), encoding);
+        }else {
+            method_exchangeImplementations(origMethod, newMethod);
+        }
+    }
+    return YES;
+}
 
 #pragma mark - Adding [UIView recursiveDescription2]
 
@@ -51,9 +84,9 @@ static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionar
             
             if (![varValue isKindOfClass:UIView.class]) continue;    // if it's not UIView or subclasses, ignore it
 
-            NSNumber *key = [NSString stringWithFormat:@"%p", varValue];  // sth like "0x756e460"
+            NSString *key = [NSString stringWithFormat:@"%p", varValue];  // sth like "0x756e460"
             
-            if (!dict[key]) dict[key] = [[NSMutableArray alloc] init];
+            if (!dict[key]) dict[key] = [NSMutableArray array];
             [((NSMutableArray *) dict[key]) addObject: [NSString stringWithCString:name encoding:NSASCIIStringEncoding]];
             
         }
@@ -77,7 +110,6 @@ static void recursivelyCollectIvarPointerToNamesDict(UIView *view, NSMutableDict
     
     // collect ivars from the view's subviews
     for (UIView *subview in view.subviews) {
-        
         recursivelyCollectIvarPointerToNamesDict(subview, dict);
     }
     
@@ -86,8 +118,9 @@ static void recursivelyCollectIvarPointerToNamesDict(UIView *view, NSMutableDict
 /**
  * Adds the method [recursiveDescription2] to UIView.
  * recursiveDescription2 augments each view with its corresponding ivar name(s)
+ * Calls private API [UIView recursiveDescription]
  */
-__attribute__((constructor)) static void HOUDAddRecursiveDescription2(void) {
+static void HOUDAddRecursiveDescription2(void) {
     @autoreleasepool {
         
         SEL recursiveDescription2SEL = @selector(recursiveDescription2);
@@ -96,11 +129,11 @@ __attribute__((constructor)) static void HOUDAddRecursiveDescription2(void) {
             
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            SEL recDescSEL = NSSelectorFromString([NSString stringWithFormat:@"%@Description",@"recursive"]);
+            SEL recDescSEL = @selector(recursiveDescription); //private, but ok, since only compiled in DEBUG
             NSMutableString *description = [view performSelector:recDescSEL];
 #pragma clang diagnostic pop
             
-            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
             recursivelyCollectIvarPointerToNamesDict(view, dict);
             
             // regex matches UIView-like description formats e.g. "<UIView: 0x756e460;" in two groups
@@ -134,45 +167,33 @@ __attribute__((constructor)) static void HOUDAddRecursiveDescription2(void) {
     }
 }
 
-#pragma mark - Pimping [UIView description]
-
-static void HOUswizzle(Class c, SEL orig, SEL new) { // same as pspdf_swizzle
-    Method origMethod = class_getInstanceMethod(c, orig);
-    Method newMethod = class_getInstanceMethod(c, new);
-    if(class_addMethod(c, orig, method_getImplementation(newMethod), method_getTypeEncoding(newMethod))) {
-        class_replaceMethod(c, new, method_getImplementation(origMethod), method_getTypeEncoding(origMethod));
-    }else {
-        method_exchangeImplementations(origMethod, newMethod);
-    }
-}
-
+#pragma mark - Pimping [UIView description] à la PST
 
 static BOOL HOUIsVisibleView(UIView *view) { // same as PSPDFKitIsVisibleView
     BOOL isViewHidden = view.isHidden || view.alpha == 0 || CGRectIsEmpty(view.frame);
     return !view || (HOUIsVisibleView(view.superview) && !isViewHidden);
 }
 
-
-
-// Following code patches UIView's description to show the classname of an an view controller, if one is attached,
-// and adds XX for hidden views and warnings for wierd view frames.
-__attribute__((constructor)) static void HOUImproveUIViewDescription(void) { // almost same as PSPDFKitImproveRecursiveDescription
+/**
+ * Pretty much copy of PSPDFKitImproveRecursiveDescription
+ *
+ * Following code patches UIView's description to show the classname of an an view controller, if one is attached,
+ * and adds XX for hidden views and warnings for wierd view frames.
+ * Doesn't use any private API.
+ */
+static void HOUImproveUIViewDescription(void) {
     @autoreleasepool {
         
-        // prevent pspdf conflict
-        SEL pspdf_customViewDescriptionSEL = @selector(pspdf_customViewDescription);
-        Method method = class_getInstanceMethod(UIView.class, pspdf_customViewDescriptionSEL);
-        if (method) return; // pspdf.. probably already swizzled it by a similar method, stop here.
+        SEL HOU_customDescription = @selector(HOU_customDescription);
         
-        SEL customViewDescriptionSEL = @selector(hou_customViewDescription);
-        IMP customViewDescriptionIMP = imp_implementationWithBlock(^(id _self) {
+        HOUReplaceMethodWithBlock(UIView.class, @selector(description), HOU_customDescription, ^(UIView *self) {
             
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            NSMutableString *description = [_self performSelector:customViewDescriptionSEL];
+            NSMutableString *description = [self performSelector:HOU_customDescription];
 #pragma clang diagnostic pop
             
-            id nextResponder = [(UIView *)_self nextResponder]; // @steipete - replaced private api call to _viewDelegate by nextResponder check
+            id nextResponder = [(UIView *)self nextResponder]; // @steipete - replaced private api call to _viewDelegate by nextResponder check
             if ([nextResponder isKindOfClass:UIViewController.class]) {
                 
                 UIViewController *viewController = nextResponder;
@@ -209,14 +230,72 @@ __attribute__((constructor)) static void HOUImproveUIViewDescription(void) { // 
             }
             
             // add marker if view is hidden.
-            if (!HOUIsVisibleView(_self)) {
+            if (!HOUIsVisibleView(self)) {
                 description = [NSMutableString stringWithFormat:@"XX (%@)", description];
             }
             
             return description;
         });
-        class_addMethod([UIView class], customViewDescriptionSEL, customViewDescriptionIMP, "@@:");
-        HOUswizzle([UIView class], @selector(description), customViewDescriptionSEL);
     }
 }
+
+#pragma mark - Pimping [UIImage description] and [UIImageView description] à la PST
+
+/** 
+ * A copy of PSPDFKitImproveImageDescription
+ * Instead of "<UIImage: 0x8b612f0>" we want "<UIImage:0x8b612f0 size:{768, 1001} scale:1 imageOrientation:0>".
+ * Doesn't use any private API.
+ */
+static void HOUImproveImageDescription() {
+    @autoreleasepool {
+        SEL descriptionSEL = NSSelectorFromString(@"HOU_description");
+        HOUReplaceMethodWithBlock(UIImage.class, @selector(description), descriptionSEL, ^(UIImage *self) {
+            NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: %p size:%@", self.class, self, NSStringFromCGSize(self.size)];
+            if (self.scale > 1) {
+                [description appendFormat:@" scale:%.0f", self.scale];
+            }
+            if ([self imageOrientation] != UIImageOrientationUp) {
+                [description appendFormat:@" imageOrientation:%d", self.imageOrientation];
+            }
+            [description appendString:@">"];
+            return [description copy];
+        });
+    }
+}
+
+/**
+ * A copy of PSPDFKitImproveImageViewDescription
+ * Instead of "<UIImage: 0x8b612f0>" we want "<UIImage:0x8b612f0 size:{768, 1001} scale:1 imageOrientation:0>".
+ * Doesn't use any private API.
+ */
+static void HOUImproveImageViewDescription() {
+    @autoreleasepool {
+        SEL descriptionSEL = NSSelectorFromString(@"HOU_description");
+        HOUReplaceMethodWithBlock(UIImageView.class, @selector(description), descriptionSEL, ^(UIImageView *self) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+            return [NSString stringWithFormat:@"%@->%@", [self performSelector:descriptionSEL], [self.image description]];
+#pragma clang diagnostic pop
+        });
+    }
+}
+
+#pragma mark - Rollout all wanted Pimp-functions on construction
+
+__attribute__((constructor)) static void HOURollOutDescriptionPimping() {
+    
+    // make sure the PST implementation isn't duplicated here
+    BOOL alreadyAddedByPST = (class_getInstanceMethod(UIView.class, @selector(pspdf_customViewDescription))) ||
+                             (class_getInstanceMethod(UIView.class, @selector(pspdf_description)));
+    
+    if (!alreadyAddedByPST) {
+        HOUImproveUIViewDescription();
+        HOUImproveImageDescription();
+        HOUImproveImageViewDescription();
+    }
+    
+    HOUDAddRecursiveDescription2(); // [add recursiveDescription2]
+}
+
 #endif
+
