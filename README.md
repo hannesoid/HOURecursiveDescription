@@ -2,9 +2,12 @@ HOURecursiveDescription
 =======================
 
 Adds `recursiveDescription2` method to UIView. In addition to UIView's (private) recursiveDescription, this shows:
-
 - names of views, if they are instance variables of UIView or UIViewController subclass objects, if part of the inspected hierarchy
+
+Improves `description` methods of UIView, UIImage, UIImageView, adds
 - UIViewController classes if they associated with a view - adapted a swizzled [UIView description] from Peter Steinberger: http://petersteinberger.com/blog/2012/pimping-recursivedescription/
+- UIImage and UIImageView get sth. like <UIImage:0x8b612f0 size:{768, 1001} scale:1 imageOrientation:0> (also from Peter)
+- Because `description` is used to compose `recursiveDescription`, these improvements also appear when calling `recursiveDescription2`
 
 Call it in debugger:
 
@@ -23,13 +26,14 @@ Example output:
     |    |    | _tableViewStyleBackground <UIGroupTableViewCellBackground: 0x719ee60; frame = (0 0; 73 44); userInteractionEnabled = NO; layer = <CALayer: 0x719eee0>>
     |    |    | _shadowView <UIImageView: 0x719ef50; frame = (1 1; 71 43); opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x719efb0>> - (null)
     |    |    | _titleView <UIButtonLabel: 0x719f100; frame = (12 12; 49 19); text = 'Button'; clipsToBounds = YES; opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x719f1f0>>
+    |    | _imageView <UIImageView: 0x8c81490; frame = (101 9; 106 60); autoresize = RM+BM; userInteractionEnabled = NO; layer = <CALayer: 0x8c81560>>-><UIImage: 0x8c827a0 size:{171, 68}>
    
 Installation
 ------------
-Drop the *HOURecursiveDescripion.m* in your xcode project and add it to your target. It is only compiled in DEBUG builds.
+Drop the *HOURecursiveDescripion.m* in your Xcode project and add it to your target. It is only compiled in DEBUG builds.
 
 How it works
 ------------
-- ´nextResponder´ is used to find an associated UIViewController for a UIView.
+- `nextResponder` is used to find an associated UIViewController for a UIView.
 - Ivar names and instance pointer adresses are traversed by inspecting the involved objects class using objc runtime methods
-- the original recursiveDescription is then manipulated using a regex
+- the return of the original `recursiveDescription` is then manipulated using a regex
