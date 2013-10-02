@@ -87,7 +87,7 @@ static void collectUIViewIvarPointerToNameDict(NSObject *obj, NSMutableDictionar
             NSString *key = [NSString stringWithFormat:@"%p", varValue];  // sth like "0x756e460"
             
             if (!dict[key]) dict[key] = [NSMutableArray array];
-            [((NSMutableArray *) dict[key]) addObject: [NSString stringWithCString:name encoding:NSASCIIStringEncoding]];
+            [((NSMutableArray *) dict[key]) addObject: @(name)];
             
         }
         
