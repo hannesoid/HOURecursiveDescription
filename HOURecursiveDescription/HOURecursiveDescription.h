@@ -22,7 +22,7 @@
  *
  *  @return A recursive description of the view's hierarchy with ivar-names, viewcontrollers and better image descriptions
  */
-- (NSString *)recursiveDescription2; // exposed here just so its obvious
+- (NSString *)recursiveDescription2;
 
 @end
 

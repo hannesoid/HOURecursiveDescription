@@ -19,10 +19,10 @@
 
 @interface UIView(HOUImprovedDescriptions_Internal)
 - (NSString *)HOU_customViewDescription;
-- (NSString *)pspdf_description;
-- (NSString *)pspdf_customViewDescription;
 - (NSString *)recursiveDescription;
 - (NSString *)recursiveDescription2;
+- (NSString *)pspdf_description;
+- (NSString *)pspdf_customViewDescription;
 @end
 
 @interface UIImageView(HOUImprovedDescriptions_Internal)
