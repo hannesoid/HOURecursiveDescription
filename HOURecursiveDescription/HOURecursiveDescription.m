@@ -12,6 +12,27 @@
 
 #if DEBUG
 
+#import "HOURecursiveDescription.h"
+
+#pragma mark - removing missing selector warnings
+// by declaring here, what we will use in swizzeling
+
+@interface UIView(HOUImprovedDescriptions_Internal)
+- (NSString *)HOU_customViewDescription;
+- (NSString *)pspdf_description;
+- (NSString *)pspdf_customViewDescription;
+- (NSString *)recursiveDescription;
+- (NSString *)recursiveDescription2;
+@end
+
+@interface UIImageView(HOUImprovedDescriptions_Internal)
+- (NSString *)HOU_description;
+@end
+
+@interface UIImage(HOUImprovedDescriptions_Internal)
+- (NSString *)HOU_description;
+@end
+
 #pragma mark - Helpers for Swizzling
 
 /**
@@ -19,7 +40,7 @@
  * Swizzles the new method, using the block as implementation. 
  * Old implementation will be available under the newSEL selector.
  */
-BOOL HOUReplaceMethodWithBlock(Class c, SEL origSEL, SEL newSEL, id block) {
+static BOOL HOUReplaceMethodWithBlock(Class c, SEL origSEL, SEL newSEL, id block) {
 //    NSAssert(c && origSEL && newSEL && block, @"invalid parameters in block swizzle"); // todo replace NSAssert, as it requires self & _cmd
     Method origMethod = class_getInstanceMethod(c, origSEL);
     const char *encoding = method_getTypeEncoding(origMethod);
@@ -44,7 +65,7 @@ BOOL HOUReplaceMethodWithBlock(Class c, SEL origSEL, SEL newSEL, id block) {
     return YES;
 }
 
-#pragma mark - Adding [UIView recursiveDescription2]
+#pragma mark - Helpers for adding [UIView recursiveDescription2]
 
 static BOOL isUIViewOrUIViewControllerClass(const char *classname) {
     return (strcmp(classname, "UIView") == 0 || strcmp(classname, "UIViewController") == 0);
@@ -115,58 +136,6 @@ static void recursivelyCollectIvarPointerToNamesDict(UIView *view, NSMutableDict
     
 }
 
-/**
- * Adds the method [recursiveDescription2] to UIView.
- * recursiveDescription2 augments each view with its corresponding ivar name(s)
- * Calls private API [UIView recursiveDescription]
- */
-static void HOUDAddRecursiveDescription2(void) {
-    @autoreleasepool {
-        
-        SEL recursiveDescription2SEL = @selector(recursiveDescription2);
-        IMP recursiveDescription2IMP = imp_implementationWithBlock(^(id _self) {
-            UIView *view = _self;
-            
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            SEL recDescSEL = @selector(recursiveDescription); //private, but ok, since only compiled in DEBUG
-            NSMutableString *description = [view performSelector:recDescSEL];
-#pragma clang diagnostic pop
-            
-            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-            recursivelyCollectIvarPointerToNamesDict(view, dict);
-            
-            // regex matches UIView-like description formats e.g. "<UIView: 0x756e460;" in two groups
-            // index 1 (<UIView: ), index 2 (0x756e460), index 0 is the entire match
-            NSRegularExpression *regex = [[NSRegularExpression alloc] initWithPattern:@"(<[^:]+: )(0x[0-9a-z]+);" options:0 error:nil];
-
-            NSArray *matches = [regex matchesInString:description options:0 range:NSMakeRange(0, description.length)];
-            
-            for (NSTextCheckingResult *match in [[matches reverseObjectEnumerator] allObjects]) {
-                // traverse backwards, so the matched ranges stay accurate when inserting strings
-                
-                NSRange range = [match rangeAtIndex:2];
-                if (range.length > 0) {
-                    NSString *addressString = [description substringWithRange:range];
-                    
-                    NSArray *names = dict[addressString];
-                    if (names.count > 0) {
-                        NSString *fullMatch = [description substringWithRange:[match rangeAtIndex:0]];
-                        
-                        [description replaceCharactersInRange:[match rangeAtIndex:0] withString:[NSString stringWithFormat:@"%@ %@", [names componentsJoinedByString:@", "] ,fullMatch]];
-                    }
-                    
-                }
-            }
-
-            return description;
-        });
-        
-        class_addMethod(UIView.class, recursiveDescription2SEL, recursiveDescription2IMP, "@@:");
-        
-    }
-}
-
 #pragma mark - Pimping [UIView description] à la PST
 
 static BOOL HOUIsVisibleView(UIView *view) { // same as PSPDFKitIsVisibleView
@@ -184,13 +153,13 @@ static BOOL HOUIsVisibleView(UIView *view) { // same as PSPDFKitIsVisibleView
 static void HOUImproveUIViewDescription(void) {
     @autoreleasepool {
         
-        SEL HOU_customDescription = @selector(HOU_customDescription);
+        SEL HOU_customViewDescription = @selector(HOU_customViewDescription);
         
-        HOUReplaceMethodWithBlock(UIView.class, @selector(description), HOU_customDescription, ^(UIView *self) {
+        HOUReplaceMethodWithBlock(UIView.class, @selector(description), HOU_customViewDescription, ^(UIView *self) {
             
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            NSMutableString *description = [self performSelector:HOU_customDescription];
+            NSMutableString *description = [self performSelector:HOU_customViewDescription];
 #pragma clang diagnostic pop
             
             id nextResponder = [(UIView *)self nextResponder]; // @steipete - replaced private api call to _viewDelegate by nextResponder check
@@ -248,7 +217,7 @@ static void HOUImproveUIViewDescription(void) {
  */
 static void HOUImproveImageDescription() {
     @autoreleasepool {
-        SEL descriptionSEL = NSSelectorFromString(@"HOU_description");
+        SEL descriptionSEL = @selector(HOU_description);
         HOUReplaceMethodWithBlock(UIImage.class, @selector(description), descriptionSEL, ^(UIImage *self) {
             NSMutableString *description = [NSMutableString stringWithFormat:@"<%@: %p size:%@", self.class, self, NSStringFromCGSize(self.size)];
             if (self.scale > 1) {
@@ -294,8 +263,68 @@ __attribute__((constructor)) static void HOURollOutDescriptionPimping() {
         HOUImproveImageViewDescription();
     }
     
-    HOUDAddRecursiveDescription2(); // [add recursiveDescription2]
 }
+
+#pragma mark - Categories
+
+@implementation UIView (HOURecursiveDescription)
+
+/**
+ * recursiveDescription2 augments each view with its corresponding ivar name(s)
+ * Calls private API [UIView recursiveDescription]
+ */
+- (NSString *)recursiveDescription2 {
+    UIView *view = self;
+    
+    NSMutableString *description = [[view recursiveDescription] mutableCopy]; //private, but ok, since only compiled in DEBUG
+    
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    recursivelyCollectIvarPointerToNamesDict(view, dict);
+    
+    // regex matches UIView-like description formats e.g. "<UIView: 0x756e460;" in two groups
+    // index 1 (<UIView: ), index 2 (0x756e460), index 0 is the entire match
+    NSRegularExpression *regex = [[NSRegularExpression alloc] initWithPattern:@"(<[^:]+: )(0x[0-9a-z]+);" options:0 error:nil];
+    
+    NSArray *matches = [regex matchesInString:description options:0 range:NSMakeRange(0, description.length)];
+    
+    for (NSTextCheckingResult *match in [[matches reverseObjectEnumerator] allObjects]) {
+        // traverse backwards, so the matched ranges stay accurate when inserting strings
+        
+        NSRange range = [match rangeAtIndex:2];
+        if (range.length > 0) {
+            NSString *addressString = [description substringWithRange:range];
+            
+            NSArray *names = dict[addressString];
+            if (names.count > 0) {
+                NSString *fullMatch = [description substringWithRange:[match rangeAtIndex:0]];
+                
+                [description replaceCharactersInRange:[match rangeAtIndex:0] withString:[NSString stringWithFormat:@"%@ %@", [names componentsJoinedByString:@", "] ,fullMatch]];
+            }
+            
+        }
+    }
+    return description;
+}
+
+@end
+
+@implementation UIApplication (HOURecursiveDescription)
+
+- (NSString *)recursiveDescription2 {
+    return [[self keyWindow] recursiveDescription2];
+}
+
++ (NSString *)recursiveDescription2 {
+    return [[[UIApplication sharedApplication] keyWindow] recursiveDescription2];
+}
+
+@end
+
+@implementation UIViewController(HOURecursiveDescription)
+- (NSString *)recursiveDescription2 {
+    return [self.view recursiveDescription2];
+}
+@end
 
 #endif
 

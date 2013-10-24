@@ -7,7 +7,7 @@
 //
 
 #import "RootViewController.h"
-
+#import <HOURecursiveDescription/HOURecursiveDescription.h>
 @interface RootViewController ()
 
 @property (weak, nonatomic) IBOutlet UIView *subview1;
@@ -22,7 +22,7 @@
 
 - (IBAction)buttonPressed:(id)sender {
 #if DEBUG
-    __unused NSString *descr = [self.view performSelector:@selector(recursiveDescription2)];
+    __unused NSString *descr = [self.view recursiveDescription2];
     // a breakpoint here outputs descr
 #endif
 }

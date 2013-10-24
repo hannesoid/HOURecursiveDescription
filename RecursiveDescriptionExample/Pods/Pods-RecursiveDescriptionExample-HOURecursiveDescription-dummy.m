@@ -1,0 +1,5 @@
+#import <Foundation/Foundation.h>
+@interface PodsDummy_Pods_RecursiveDescriptionExample_HOURecursiveDescription : NSObject
+@end
+@implementation PodsDummy_Pods_RecursiveDescriptionExample_HOURecursiveDescription
+@end
