@@ -47,7 +47,9 @@ Example output:
 Installation
 ------------
 - Drop the *HOURecursiveDescripion.m* in your Xcode project and add it to your target. It is only compiled in DEBUG builds. HOURecursiveDescripion.h is optional if you want to call from code.
+
 or with CocoaPods
+
     pod 'HOURecursiveDescription'
 
 How it works
