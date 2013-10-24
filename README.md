@@ -1,7 +1,7 @@
 HOURecursiveDescription
 =======================
 
-Adds `recursiveDescription2` method to UIView, UIViewController, UIAppilcation. In addition to UIView's (private) recursiveDescription, this shows:
+Adds `recursiveDescription2` method to UIView, UIViewController, UIApplication. In addition to UIView's (private) recursiveDescription, this shows:
 - names of views, if they are instance variables of UIView or UIViewController subclass objects, if part of the inspected hierarchy
 
 Improves `description` methods of UIView, UIImage, UIImageView, adds
@@ -34,15 +34,15 @@ Call in debugger on the application:
     
 Example output:
 
-<UIWindow: 0xde15700; frame = (0 0; 320 568); gestureRecognizers = <NSArray: 0xde17dc0>; layer = <UIWindowLayer: 0xde18620>>
-   | 'RootViewController:0xde189b0' <UIView: 0x8a23390; frame = (0 0; 320 568); autoresize = RM+BM; layer = <CALayer: 0x8a233f0>>
-   |    | _subview1 <UIView: 0x8a23220; frame = (96 20; 128 135); autoresize = W+H; layer = <CALayer: 0x8a23280>>
-   |    | _myButton, _button <UIButton: 0x8a1f6f0; frame = (46 295; 246 44); opaque = NO; autoresize = RM+BM; layer = <CALayer: 0x8a1f820>>
-   |    |    | _titleView <UIButtonLabel: 0x8a258b0; frame = (33 13; 179 18); text = 'log recursiveDescription2'; clipsToBounds = YES; opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x8a25960>>
-   |    | _greyBlob <UIView: 0x8a21630; frame = (46 96; 227 136); autoresize = RM+BM; layer = <CALayer: 0x8a21690>>
-   |    |    | _myButton2, _button <UIButton: 0x8a1ea20; frame = (20 73; 73 44); opaque = NO; autoresize = RM+BM; layer = <CALayer: 0x8a16750>>
-   |    |    |    | _titleView <UIButtonLabel: 0x8a21c50; frame = (12 13; 48 18); text = 'Button'; clipsToBounds = YES; opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x8a21d80>>
-   |    |    | _imageView <UIImageView: 0x8a184c0; frame = (101 9; 106 60); autoresize = RM+BM; userInteractionEnabled = NO; layer = <CALayer: 0x8a18990>>-><UIImage: 0x8a22350 size:{171, 68}> - (null)
+    <UIWindow: 0xde15700; frame = (0 0; 320 568); gestureRecognizers = <NSArray: 0xde17dc0>; layer = <UIWindowLayer: 0xde18620>>
+    | 'RootViewController:0xde189b0' <UIView: 0x8a23390; frame = (0 0; 320 568); autoresize = RM+BM; layer = <CALayer: 0x8a233f0>>
+    |    | _subview1 <UIView: 0x8a23220; frame = (96 20; 128 135); autoresize = W+H; layer = <CALayer: 0x8a23280>>
+    |    | _myButton, _button <UIButton: 0x8a1f6f0; frame = (46 295; 246 44); opaque = NO; autoresize = RM+BM; layer = <CALayer: 0x8a1f820>>
+    |    |    | _titleView <UIButtonLabel: 0x8a258b0; frame = (33 13; 179 18); text = 'log recursiveDescription2'; clipsToBounds = YES; opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x8a25960>>
+    |    | _greyBlob <UIView: 0x8a21630; frame = (46 96; 227 136); autoresize = RM+BM; layer = <CALayer: 0x8a21690>>
+    |    |    | _myButton2, _button <UIButton: 0x8a1ea20; frame = (20 73; 73 44); opaque = NO; autoresize = RM+BM; layer = <CALayer: 0x8a16750>>
+    |    |    |    | _titleView <UIButtonLabel: 0x8a21c50; frame = (12 13; 48 18); text = 'Button'; clipsToBounds = YES; opaque = NO; userInteractionEnabled = NO; layer = <CALayer: 0x8a21d80>>
+    |    |    | _imageView <UIImageView: 0x8a184c0; frame = (101 9; 106 60); autoresize = RM+BM; userInteractionEnabled = NO; layer = <CALayer: 0x8a18990>>-><UIImage: 0x8a22350 size:{171, 68}> - (null)
 
 Installation
 ------------
